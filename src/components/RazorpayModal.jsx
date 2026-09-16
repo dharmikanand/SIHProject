@@ -15,7 +15,7 @@ import {
 import confetti from 'canvas-confetti';
 
 export default function RazorpayModal() {
-  const { activeModal, setActiveModal, cart, placeOrder, addNotification } = useApp();
+  const { activeModal, setActiveModal, cart, placeOrder, addNotification, t } = useApp();
   const [paymentMethod, setPaymentMethod] = useState('upi'); // 'upi', 'card', 'netbanking'
   const [upiId, setUpiId] = useState('farmerbuyer@okhdfcbank');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -42,8 +42,8 @@ export default function RazorpayModal() {
         orderId: `order_RZP_${Math.floor(10000000 + Math.random() * 90000000)}`
       });
       addNotification(
-        "Razorpay Escrow Payment Authorized",
-        `₹${totalAmount.toLocaleString('en-IN')} secured. Split transfers scheduled via Razorpay Route.`,
+        t('rzpToastTitle'),
+        t('rzpToastBody', totalAmount.toLocaleString('en-IN')),
         "success"
       );
       setActiveModal(null);
@@ -65,13 +65,13 @@ export default function RazorpayModal() {
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <h3 className="font-extrabold text-sm text-white">Razorpay Escrow Gateway</h3>
+                <h3 className="font-extrabold text-sm text-white">{t('rzpTitle')}</h3>
                 <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">
                   PCI-DSS Level 1
                 </span>
               </div>
-              <p className="text-[11px] text-stone-300">
-                KrishiSetu National Direct Agri-Grid
+              <p className="text-[11px] text-ink-3">
+                {t('rzpSub')}
               </p>
             </div>
           </div>
@@ -88,7 +88,7 @@ export default function RazorpayModal() {
           {/* Amount Badge */}
           <div className="flex items-center justify-between p-4 rounded-2xl bg-stone-50 border border-stone-200">
             <div>
-              <span className="text-[10px] text-stone-500 font-semibold uppercase block">Amount Payable into Escrow</span>
+              <span className="text-[10px] text-ink-2 font-semibold uppercase block">{t('amountPayable')}</span>
               <span className="text-2xl font-black text-stone-900 mt-0.5 block">
                 ₹{totalAmount.toLocaleString('en-IN')}
               </span>
@@ -96,7 +96,7 @@ export default function RazorpayModal() {
             <div className="text-right">
               <span className="text-[10px] text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full font-bold flex items-center gap-1">
                 <Lock className="w-3 h-3" />
-                Escrow Protected
+                {t('escrowProtected')}
               </span>
             </div>
           </div>

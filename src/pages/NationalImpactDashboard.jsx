@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 
 export default function NationalImpactDashboard() {
+  const { t } = useApp();
   const stateImpacts = [
     {
       state: "Maharashtra (Nashik, Pune, Sangli)",
@@ -66,21 +67,21 @@ export default function NationalImpactDashboard() {
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold mb-3">
             <Building2 className="w-3.5 h-3.5" />
-            <span>Ministry of Consumer Affairs, Food & Public Distribution • DoCA Policy Dashboard</span>
+            <span>{t('impactBadge')}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
-            National Agricultural Public Infrastructure
+          <h1 className="text-2xl sm:text-3xl font-display font-semibold tracking-tight">
+            {t('impactHeadline')}
           </h1>
-          <p className="mt-1 text-xs sm:text-sm text-stone-300 max-w-2xl leading-relaxed">
-            Real-time macroeconomic assessment of supply chain disintermediation under Smart India Hackathon Problem Statement 26033.
+          <p className="mt-1 text-xs sm:text-sm text-ink-3 max-w-2xl leading-relaxed">
+            {t('impactBody')}
           </p>
         </div>
 
         <div className="flex items-center gap-3 bg-white/10 p-3 px-4 rounded-2xl border border-white/20 backdrop-blur-sm shrink-0">
           <Award className="w-8 h-8 text-amber-400 shrink-0" />
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 block">Digital India Standard</span>
-            <span className="text-xs font-extrabold text-white">ONDC & UPI Protocol Aligned</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 block">{t('digitalIndia')}</span>
+            <span className="text-xs font-bold text-paper">{t('ondcAligned')}</span>
           </div>
         </div>
       </div>
@@ -90,53 +91,53 @@ export default function NationalImpactDashboard() {
         
         <div className="p-5 rounded-3xl bg-white border border-stone-200 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wide">Farmer Wealth Generated</span>
+            <span className="text-[10px] font-bold text-ink-2 uppercase tracking-wide">{t('farmerWealth')}</span>
             <TrendingUp className="w-4 h-4 text-emerald-600" />
           </div>
           <p className="text-3xl font-black text-emerald-700 mt-2">
             ₹142.8 Cr
           </p>
-          <p className="text-xs text-stone-600 mt-1">
-            Transferred directly into farmer bank accounts without commission cuts.
+          <p className="text-xs text-ink-2 mt-1">
+            {t('farmerWealthNote')}
           </p>
         </div>
 
         <div className="p-5 rounded-3xl bg-white border border-stone-200 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wide">Consumer Inflation Relief</span>
+            <span className="text-[10px] font-bold text-ink-2 uppercase tracking-wide">{t('inflationRelief')}</span>
             <TrendingDown className="w-4 h-4 text-amber-600" />
           </div>
           <p className="text-3xl font-black text-amber-700 mt-2">
             ₹98.4 Cr
           </p>
-          <p className="text-xs text-stone-600 mt-1">
-            Saved by retail consumers & bulk food processing businesses.
+          <p className="text-xs text-ink-2 mt-1">
+            {t('inflationReliefNote')}
           </p>
         </div>
 
         <div className="p-5 rounded-3xl bg-white border border-stone-200 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wide">Food Wastage Prevented</span>
+            <span className="text-[10px] font-bold text-ink-2 uppercase tracking-wide">{t('wastagePrevented')}</span>
             <Scale className="w-4 h-4 text-purple-600" />
           </div>
           <p className="text-3xl font-black text-purple-700 mt-2">
             48,200 MT
           </p>
-          <p className="text-xs text-stone-600 mt-1">
-            Perishables saved through AI milk-run routing & direct cold-chain.
+          <p className="text-xs text-ink-2 mt-1">
+            {t('wastageNote')}
           </p>
         </div>
 
         <div className="p-5 rounded-3xl bg-white border border-stone-200 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wide">Carbon Abatement</span>
+            <span className="text-[10px] font-bold text-ink-2 uppercase tracking-wide">{t('carbonAbatement')}</span>
             <Leaf className="w-4 h-4 text-emerald-600" />
           </div>
           <p className="text-3xl font-black text-emerald-800 mt-2">
             1,240 MT
           </p>
-          <p className="text-xs text-stone-600 mt-1">
-            CO2 emissions eliminated via route optimization & EV cluster aggregation.
+          <p className="text-xs text-ink-2 mt-1">
+            {t('carbonNote')}
           </p>
         </div>
 
@@ -146,15 +147,15 @@ export default function NationalImpactDashboard() {
       <div className="bg-white rounded-3xl border border-stone-200 shadow-sm p-6 space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-stone-100">
           <div>
-            <h3 className="text-base font-extrabold text-stone-900">
-              State-wise KrishiSetu Grid Deployment Status
+            <h3 className="text-base font-bold text-ink">
+              {t('deploymentTitle')}
             </h3>
-            <p className="text-xs text-stone-500">
-              Active rural aggregation hubs, participating FPOs, and localized value retention metrics
+            <p className="text-xs text-ink-2">
+              {t('deploymentSubtitle')}
             </p>
           </div>
-          <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-200">
-            5 Major Agri-States Active
+          <span className="text-xs font-semibold text-field-700 bg-field-50 px-3 py-1 rounded-sm border border-field-200">
+            {t('statesActive')}
           </span>
         </div>
 
@@ -162,12 +163,12 @@ export default function NationalImpactDashboard() {
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-stone-200 text-stone-500 font-bold uppercase text-[10px]">
-                <th className="py-3 px-3">State & Primary Corridors</th>
-                <th className="py-3 px-3">Enrolled Farmers</th>
-                <th className="py-3 px-3">Active FPOs</th>
-                <th className="py-3 px-3">Avg. Farmer Gain</th>
-                <th className="py-3 px-3">Transit Spoilage Drop</th>
-                <th className="py-3 px-3">Key High-Value Crops</th>
+                <th className="py-3 px-3">{t('thState')}</th>
+                <th className="py-3 px-3">{t('thFarmers')}</th>
+                <th className="py-3 px-3">{t('thFpos')}</th>
+                <th className="py-3 px-3">{t('thGain')}</th>
+                <th className="py-3 px-3">{t('thSpoilage')}</th>
+                <th className="py-3 px-3">{t('thCrops')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100 font-medium">
@@ -188,34 +189,53 @@ export default function NationalImpactDashboard() {
 
       {/* Policy Recommendations & DoCA Integration Box */}
       <div className="p-6 rounded-3xl bg-stone-900 text-white border border-stone-800 space-y-4">
-        <h4 className="text-sm font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
-          <FileText className="w-4 h-4 text-emerald-400" />
-          Department of Consumer Affairs (DoCA) Strategic Policy Alignment
+        <h4 className="text-sm font-bold text-paper uppercase tracking-wider flex items-center gap-2">
+          <FileText className="w-4 h-4 text-field-300" />
+          {t('policyTitle')}
         </h4>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
           <div className="p-4 rounded-2xl bg-stone-800/80 border border-stone-700/80">
-            <h5 className="font-bold text-emerald-300">1. Price Stabilization Fund (PSF) Integration</h5>
-            <p className="text-stone-300 mt-1 leading-relaxed">
-              Real-time farmgate telemetry allows the ministry to detect early supply imbalances and release buffer stocks directly to consumer cooperatives before retail price spikes occur.
+            <h5 className="font-bold text-field-300">{t('policy1Title')}</h5>
+            <p className="text-ink-3 mt-1 leading-relaxed">
+              {t('policy1Body')}
             </p>
           </div>
 
           <div className="p-4 rounded-2xl bg-stone-800/80 border border-stone-700/80">
-            <h5 className="font-bold text-emerald-300">2. National Milk-Run Logistics Subsidy</h5>
-            <p className="text-stone-300 mt-1 leading-relaxed">
-              Consolidated EV aggregation qualifies for PM-eBus and FAME-III green rural freight incentives, lowering per-quintal transportation costs below ₹0.90/km.
+            <h5 className="font-bold text-field-300">{t('policy2Title')}</h5>
+            <p className="text-ink-3 mt-1 leading-relaxed">
+              {t('policy2Body')}
             </p>
           </div>
 
           <div className="p-4 rounded-2xl bg-stone-800/80 border border-stone-700/80">
-            <h5 className="font-bold text-emerald-300">3. Universal Kisan UPI Escrow</h5>
-            <p className="text-stone-300 mt-1 leading-relaxed">
-              Zero payment defaults. Eliminates the 60-90 day credit delays customary in private wholesale mandis, giving smallholders immediate liquidity upon gate delivery.
+            <h5 className="font-bold text-field-300">{t('policy3Title')}</h5>
+            <p className="text-ink-3 mt-1 leading-relaxed">
+              {t('policy3Body')}
             </p>
           </div>
         </div>
       </div>
+
+      {/* Policy benchmark: eNAM comparison (moved from top-level nav) */}
+      <section className="rule pt-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <p className="eyebrow mb-1">{t('policyBenchmark')}</p>
+            <h2 className="font-display font-semibold text-2xl text-ink">{t('enamCompareTitle')}</h2>
+            <p className="text-sm text-ink-2 mt-1 max-w-2xl">
+              {t('enamCompareSub')}
+            </p>
+          </div>
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('open-enam-audit'))}
+            className="self-start sm:self-auto px-4 py-2.5 bg-ink hover:bg-field-700 text-paper text-[12px] font-bold uppercase tracking-wide rounded-sm transition shrink-0"
+          >
+            {t('openEnamAudit')} →
+          </button>
+        </div>
+      </section>
 
     </div>
   );

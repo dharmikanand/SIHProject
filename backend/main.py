@@ -17,7 +17,9 @@ from __future__ import annotations
 
 import random
 import time
-from typing import Dict, List, Optional
+from typing import Dict, List, Literal, Optional
+
+from pydantic import BaseModel, Field
 
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
@@ -93,6 +95,52 @@ def health():
         "service": "KrishiSetu API",
         "ps": "26033",
         "ledger_chain_valid": LEDGER.verify_chain(),
+    }
+
+
+# ---------------------------------------------------------------- auth
+# Demo OTP auth: in production this is SMS-delivered; for the prototype the OTP is
+# fixed (4321) and verified statelessly. Same session-shape as a real JWT flow.
+DEMO_OTP = "4321"
+OTP_ISSUES: dict = {}  # mobile -> issue timestamp (simple rate/audit trail)
+
+
+class OtpRequest(BaseModel):
+    mobile: str = Field(min_length=10, max_length=10, pattern=r"^\d+$")
+    role: Literal["farmer", "buyer"]
+    language: Literal["en", "hi", "mr", "pa", "ta"] = "en"
+
+
+class OtpVerify(BaseModel):
+    mobile: str = Field(min_length=10, max_length=10, pattern=r"^\d+$")
+    role: Literal["farmer", "buyer"]
+    otp: str = Field(min_length=4, max_length=4)
+    name: str = ""
+
+
+@app.post("/api/v1/auth/otp")
+def request_otp(body: OtpRequest):
+    """Issue a login OTP. Returns masked mobile + delivery channel used."""
+    OTP_ISSUES[body.mobile] = time.time()
+    audit(actor=f"+91-{body.mobile[-4:]}", entity="auth", entity_id=body.mobile, action="otp_requested", payload={"role": body.role, "lang": body.language})
+    return {
+        "sent_to": f"+91 ******{body.mobile[-4:]}",
+        "channel": "sms" if body.language in ("en", "hi") else "sms_regional",
+        "expires_in": 300,
+        "demo_otp": DEMO_OTP,  # prototype convenience; remove in production
+    }
+
+
+@app.post("/api/v1/auth/verify")
+def verify_otp(body: OtpVerify):
+    """Verify OTP → session token (demo-static). Wrong OTP = 401, audited."""
+    if body.otp != DEMO_OTP:
+        audit(actor=f"+91-{body.mobile[-4:]}", entity="auth", entity_id=body.mobile, action="otp_failed")
+        raise HTTPException(status_code=401, detail="Invalid OTP")
+    audit(actor=f"+91-{body.mobile[-4:]}", entity="auth", entity_id=body.mobile, action="login", payload={"role": body.role})
+    return {
+        "token": f"ks-demo-{body.mobile}",
+        "user": {"name": body.name or ("Farmer" if body.role == "farmer" else "Buyer"), "role": body.role, "mobile": body.mobile},
     }
 
 

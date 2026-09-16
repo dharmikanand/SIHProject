@@ -52,12 +52,12 @@ const createIcon = (bgClass, label) => {
   });
 };
 
-const hubIcon = createIcon('#15803d', '🏢 Central Hub');
-const farmIcon = (name) => createIcon('#0284c7', `🌾 ${name}`);
-const clusterCentroidIcon = createIcon('#7e22ce', '📍 PostGIS Centroid');
+const hubIcon = createIcon('#15803d', 'HUB');
+const farmIcon = (name) => createIcon('#0284c7', name);
+const clusterCentroidIcon = createIcon('#7e22ce', 'PostGIS');
 
 export default function LogisticsDashboard() {
-  const { addNotification } = useApp();
+  const { addNotification, t } = useApp();
   const [routeMode, setRouteMode] = useState('optimized'); // 'optimized' vs 'unoptimized'
   const [showPostGISZones, setShowPostGISZones] = useState(true);
   const [selectedVehicleCapacity, setSelectedVehicleCapacity] = useState(10000); // 10T default
@@ -118,13 +118,13 @@ export default function LogisticsDashboard() {
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold mb-3">
             <Cpu className="w-3.5 h-3.5" />
-            <span>Google OR-Tools VRPTW + PostGIS Spatial Aggregation</span>
+            <span>{t('logisticsBadge')}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
-            AI Fleet & Cluster Milk-Run Optimizer
+          <h1 className="text-2xl sm:text-3xl font-display font-semibold tracking-tight">
+            {t('logisticsHeadline')}
           </h1>
-          <p className="mt-1 text-xs sm:text-sm text-stone-300 max-w-2xl leading-relaxed">
-            Eliminates smallholder logistics fragmentation. PostGIS DBSCAN clusters 5–15 smallholders into geofenced zones, and Google OR-Tools solves the Vehicle Routing Problem with Time Windows (VRPTW) before sunrise heat causes produce wilting.
+          <p className="mt-1 text-xs sm:text-sm text-ink-3 max-w-2xl leading-relaxed">
+            {t('logisticsBody')}
           </p>
         </div>
 
@@ -138,8 +138,8 @@ export default function LogisticsDashboard() {
                 : 'bg-stone-800 border-stone-700 text-stone-400 hover:text-white'
             }`}
           >
-            <Layers className="w-4 h-4 text-purple-400" />
-            <span>PostGIS Geofenced Zones</span>
+            <Layers className="w-4 h-4 text-harvest-500" />
+            <span>{t('postgisZones')}</span>
           </button>
 
           {/* Route Mode Toggle */}
@@ -152,7 +152,7 @@ export default function LogisticsDashboard() {
                   : 'text-stone-400 hover:text-white'
               }`}
             >
-              OR-Tools Route
+              {t('orToolsRoute')}
             </button>
             <button
               onClick={() => setRouteMode('unoptimized')}
@@ -162,7 +162,7 @@ export default function LogisticsDashboard() {
                   : 'text-stone-400 hover:text-white'
               }`}
             >
-              Mandi Fragmented
+              {t('mandiFragmented')}
             </button>
           </div>
         </div>
@@ -171,41 +171,41 @@ export default function LogisticsDashboard() {
       {/* Real-time Technical Scorecard */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <div className="p-4 rounded-2xl bg-white border border-stone-200">
-          <span className="text-[10px] text-stone-500 font-bold uppercase block">PostGIS Aggregation</span>
+          <span className="text-[10px] text-ink-2 font-bold uppercase block">{t('postgisAggregation')}</span>
           <p className="text-xl font-black text-purple-700 mt-1">
             {spatialClustering.consolidationRatio}
           </p>
-          <span className="text-[10px] text-purple-800 font-semibold">DBSCAN ε=8.5km</span>
+          <span className="text-[10px] text-harvest-700 font-semibold">{t('dbscanEps')}</span>
         </div>
 
         <div className="p-4 rounded-2xl bg-white border border-stone-200">
-          <span className="text-[10px] text-stone-500 font-bold uppercase block">Circuit Distance</span>
+          <span className="text-[10px] text-ink-2 font-bold uppercase block">{t('circuitDistance')}</span>
           <p className="text-xl font-black text-stone-900 mt-1">
             {routeMode === 'optimized' ? `${vrptwSolution.totalDistanceKm} km` : '218 km'}
           </p>
-          <span className="text-[10px] text-emerald-700 font-bold">
-            {routeMode === 'optimized' ? '-65% Distance Cut' : '5 Independent Runs'}
+          <span className="text-[10px] text-field-600 font-bold">
+            {routeMode === 'optimized' ? t('distanceCut') : t('independentRuns')}
           </span>
         </div>
 
         <div className="p-4 rounded-2xl bg-white border border-stone-200">
-          <span className="text-[10px] text-stone-500 font-bold uppercase block">Perishability Spoilage</span>
-          <p className="text-xl font-black text-emerald-700 mt-1">
-            {routeMode === 'optimized' ? '< 1.2%' : '8.4% Spoilage'}
+          <span className="text-[10px] text-ink-2 font-bold uppercase block">{t('spoilageLabel')}</span>
+          <p className="text-xl font-black text-field-600 mt-1">
+            {routeMode === 'optimized' ? t('spoilageOptimized') : t('spoilageBaseline')}
           </p>
-          <span className="text-[10px] text-emerald-800 font-semibold">Cold EV Reefer</span>
+          <span className="text-[10px] text-field-700 font-semibold">{t('coldReefer')}</span>
         </div>
 
         <div className="p-4 rounded-2xl bg-white border border-stone-200">
-          <span className="text-[10px] text-stone-500 font-bold uppercase block">Morning Quality Window</span>
+          <span className="text-[10px] text-ink-2 font-bold uppercase block">{t('qualityWindowLabel')}</span>
           <p className="text-xl font-black text-blue-700 mt-1">
             {vrptwSolution.manifest[vrptwSolution.manifest.length - 1]?.arrival || "09:26 AM"}
           </p>
-          <span className="text-[10px] text-blue-800 font-bold">100% Pre-Heat Compliance</span>
+          <span className="text-[10px] text-field-700 font-bold">{t('complianceNote')}</span>
         </div>
 
         <div className="p-4 rounded-2xl bg-white border border-stone-200 col-span-2 md:col-span-1">
-          <span className="text-[10px] text-stone-500 font-bold uppercase block">Fleet Capacity Utilization</span>
+          <span className="text-[10px] text-ink-2 font-bold uppercase block">{t('fleetUtilization')}</span>
           <p className="text-xl font-black text-stone-900 mt-1">
             {vrptwSolution.capacityUtilizationPct}%
           </p>
@@ -222,11 +222,11 @@ export default function LogisticsDashboard() {
         <div className="lg:col-span-2 bg-white p-5 rounded-3xl border border-stone-200 shadow-sm flex flex-col space-y-3">
           <div className="flex items-center justify-between pb-2 border-b border-stone-100">
             <div>
-              <h3 className="font-extrabold text-stone-900 text-sm">
-                Interactive GIS Cluster & VRPTW Route Map
+              <h3 className="font-bold text-ink text-sm">
+                {t('mapTitle')}
               </h3>
-              <p className="text-[11px] text-stone-500">
-                Pimpalgaon Baswant Agri-Corridor • 5 Farm Gates • Time-Window Constrained
+              <p className="text-[11px] text-ink-2">
+                {t('mapSubtitle')}
               </p>
             </div>
 
@@ -235,8 +235,8 @@ export default function LogisticsDashboard() {
                 onClick={() => setShowPythonConsole(!showPythonConsole)}
                 className="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-xl text-xs font-bold transition flex items-center gap-1 border border-stone-300"
               >
-                <Terminal className="w-3.5 h-3.5 text-stone-600" />
-                <span>Python Script</span>
+                <Terminal className="w-3.5 h-3.5 text-ink-2" />
+                <span>{t('pythonScript')}</span>
               </button>
 
               <button
@@ -245,7 +245,7 @@ export default function LogisticsDashboard() {
                 className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
               >
                 <Play className={`w-3.5 h-3.5 ${isSimulatingDispatch ? 'animate-spin' : ''}`} />
-                <span>{isSimulatingDispatch ? 'Solving OR-Tools...' : 'Dispatch Fleet'}</span>
+                <span>{isSimulatingDispatch ? t('solvingOrTools') : t('dispatchFleet')}</span>
               </button>
             </div>
           </div>
@@ -351,29 +351,28 @@ export default function LogisticsDashboard() {
         <div className="space-y-4">
           
           {/* Vehicle Capacity Control */}
-          <div className="p-4 bg-white rounded-2xl border border-stone-200 space-y-2">
-            <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider">
-              Vehicle Capacity Constraint
-            </label>
+          <div className="p-4 bg-white rounded-2xl border border-stone-200 space-y-2">              <label className="block text-xs font-bold text-ink-2 uppercase tracking-wider">
+                {t('vehicleCapacityLabel')}
+              </label>
             <select
               value={selectedVehicleCapacity}
               onChange={(e) => setSelectedVehicleCapacity(Number(e.target.value))}
               className="w-full text-xs p-2.5 rounded-xl border border-stone-300 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
-              <option value={5000}>3.5T Tata Ace EV Reefer (5,000 kg max)</option>
-              <option value={10000}>10T Tata Ultra EV Reefer (10,000 kg max - Recommended)</option>
-              <option value={15000}>15T Heavy BharatBenz Reefer (15,000 kg max)</option>
+              <option value={5000}>{t('vehicleSmall')}</option>
+              <option value={10000}>{t('vehicleMedium')}</option>
+              <option value={15000}>{t('vehicleLarge')}</option>
             </select>
           </div>
 
           {/* Manifest Table */}
           <div className="bg-white p-5 rounded-3xl border border-stone-200 shadow-sm space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-stone-100">
-              <h4 className="font-extrabold text-stone-900 text-xs uppercase tracking-wider">
-                VRPTW Solved Manifest ({vrptwSolution.manifest.length} Nodes)
+              <h4 className="font-bold text-ink text-xs uppercase tracking-wider">
+                {t('manifestTitle')} ({vrptwSolution.manifest.length} {t('nodesLabel')})
               </h4>
-              <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
-                0 Violations
+              <span className="text-[10px] font-bold text-field-700 bg-field-50 px-2 py-0.5 rounded-sm">
+                {t('zeroViolations')}
               </span>
             </div>
 
@@ -397,7 +396,7 @@ export default function LogisticsDashboard() {
 
                   {stop.nodeType === "FARM_GATE" && (
                     <div className="flex items-center justify-between text-[11px] text-stone-500 pl-5">
-                      <span>Window: {stop.timeWindowLabel}</span>
+                      <span>{t('windowLabel')}: {stop.timeWindowLabel}</span>
                       <span className="text-emerald-700 font-bold">{stop.payloadCollectedKg} kg</span>
                     </div>
                   )}
@@ -406,8 +405,8 @@ export default function LogisticsDashboard() {
             </div>
 
             <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-[11px] text-emerald-950 font-semibold flex items-center justify-between">
-              <span>Morning Quality Window:</span>
-              <span className="font-extrabold text-emerald-800">Closed before 09:30 AM</span>
+              <span>{t('qualityWindowLabel')}:</span>
+              <span className="font-bold text-field-700">{t('morningQualityClosed')}</span>
             </div>
           </div>
 

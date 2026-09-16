@@ -13,9 +13,12 @@ import {
 } from 'lucide-react';
 
 export default function NotificationGatewayModal() {
-  const { activeModal, setActiveModal, addNotification } = useApp();
+  const { activeModal, setActiveModal, addNotification, language } = useApp();
   const [activeChannel, setActiveChannel] = useState('whatsapp'); // 'whatsapp', 'sms'
-  const [selectedLanguage, setSelectedLanguage] = useState('hi'); // 'hi', 'en', 'mr'
+  // Follow the app language when supported by the gateway mock (hi/mr/en), else English
+  const [selectedLanguage, setSelectedLanguage] = useState(
+    ['hi', 'mr', 'en'].includes(language) ? language : 'en'
+  );
 
   if (activeModal !== 'notifications-gateway') return null;
 
@@ -62,7 +65,7 @@ export default function NotificationGatewayModal() {
                 </span>
                 <span className="text-xs font-mono text-stone-400">Rural Vernacular SMS</span>
               </div>
-              <h3 className="text-lg font-bold text-white mt-1">
+              <h3 className="text-lg font-bold text-paper mt-1">
                 Automated Dispatch & Payment Notification Rails
               </h3>
             </div>

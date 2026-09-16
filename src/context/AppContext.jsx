@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { CROPS_DATA, TRANSLATIONS } from '../data/mockData';
+import { translate } from '../i18n';
 import confetti from 'canvas-confetti';
 import {
   isBackendHealthy,
@@ -10,8 +11,38 @@ import {
 
 const AppContext = createContext();
 
+// Map a backend Listing object onto the frontend crop shape (best-effort, for merged display)
+function mockFromServerListing(l) {
+  const rupee = (p) => Math.round(p / 100);
+  return {
+    id: l.id,
+    serverListingId: l.id,
+    name: l.crop_name || l.name || 'Server Listing',
+    category: l.category || 'Vegetables',
+    description: l.description || 'Listed on KrishiSetu server escrow grid.',
+    farmerPrice: rupee(l.farmer_price_paise ?? 0),
+    mandiPrice: rupee(l.mandi_price_paise ?? 0),
+    retailPrice: rupee(l.retail_price_paise ?? 0),
+    krishiSetuPrice: rupee(l.platform_price_paise ?? 0),
+    quantity: l.quantity_quintals ?? 10,
+    qualityGrade: l.quality_grade || 'Grade A',
+    organicCert: !!l.organic_cert,
+    harvestDate: 'Freshly Harvested',
+    minOrderBulk: 500,
+    image: l.image_url || 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=600&auto=format&fit=crop&q=80',
+    farmer: {
+      name: l.farmer_name || 'KrishiSetu Partner Farmer',
+      village: l.village || 'Nashik',
+      district: l.district || 'Maharashtra',
+      rating: 4.8,
+    },
+    tags: ['Server Escrow', 'Verified'],
+  };
+}
+
 export function AppProvider({ children }) {
   const [language, setLanguage] = useState('en');
+  const [user, setUser] = useState(null); // { name, role: 'farmer'|'buyer', mobile } — null = logged out
   const [persona, setPersona] = useState('buyer'); // 'buyer', 'farmer', 'logistics', 'ai-forecast', 'impact'
   const [crops, setCrops] = useState(CROPS_DATA);
   const [selectedCrop, setSelectedCrop] = useState(null);
@@ -44,6 +75,7 @@ export function AppProvider({ children }) {
       ],
       totalAmount: 9300,
       farmerPayout: 8000,
+      status: "IN_TRANSIT",
       escrowStatus: "LOCKED_IN_ESCROW", // 'LOCKED_IN_ESCROW', 'QUALITY_VERIFIED', 'RELEASED_TO_FARMER'
       logisticsStatus: "IN_TRANSIT", // 'SCHEDULED', 'PICKED_UP', 'IN_TRANSIT', 'DELIVERED'
       deliveryOtp: "4819",
@@ -60,6 +92,7 @@ export function AppProvider({ children }) {
       ],
       totalAmount: 57500,
       farmerPayout: 50000,
+      status: "DELIVERED",
       escrowStatus: "RELEASED_TO_FARMER",
       logisticsStatus: "DELIVERED",
       deliveryOtp: "9021",
@@ -77,11 +110,29 @@ export function AppProvider({ children }) {
   useEffect(() => {
     if (healthChecked.current) return;
     healthChecked.current = true;
-    isBackendHealthy().then(setBackendOnline);
+    isBackendHealthy().then(async (online) => {
+      setBackendOnline(online);
+      // Merge server listings (marked serverSynced → server-side escrow checkout)
+      if (online) {
+        try {
+          const serverListings = await apiFetchListings();
+          const mapped = serverListings.map((l) => ({
+            ...mockFromServerListing(l),
+            serverSynced: true,
+          }));
+          setCrops((prev) => {
+            const seen = new Set(prev.map((c) => c.serverListingId));
+            return [...mapped.filter((m) => !seen.has(m.serverListingId)), ...prev];
+          });
+        } catch { /* keep mock data */ }
+      }
+    });
   }, []);
 
-  // Translation helper
-  const t = (key) => {
+  // Translation helper — full dictionary in src/i18n.js, legacy keys fall back to mockData
+  const t = (key, ...args) => {
+    const i18nVal = translate(language, key, ...args);
+    if (i18nVal !== key) return i18nVal;
     if (TRANSLATIONS[language] && TRANSLATIONS[language][key]) {
       return TRANSLATIONS[language][key];
     }
@@ -90,6 +141,18 @@ export function AppProvider({ children }) {
 
   const removeNotification = (id) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
+  };
+
+  const login = ({ name, role, mobile }) => {
+    setUser({ name, role, mobile });
+    // Land each role on its home surface
+    setPersona(role === 'farmer' ? 'farmer' : 'buyer');
+  };
+
+  const logout = () => {
+    setUser(null);
+    setPersona('buyer');
+    setActiveModal(null);
   };
 
   const addNotification = (title, message, type = "info") => {
@@ -121,7 +184,7 @@ export function AppProvider({ children }) {
       }
       return [...prev, { crop, quantityKg, mode }];
     });
-    addNotification("Added to Basket", `${quantityKg} kg of ${crop.name} added.`, "success");
+    addNotification(t('toastAddedToBasket'), t('toastAddedBody', quantityKg, crop.name), "success");
   };
 
   const updateCartQuantity = (cropId, quantityKg) => {
@@ -152,8 +215,8 @@ export function AppProvider({ children }) {
     };
     setCrops((prev) => [createdCrop, ...prev]);
     addNotification(
-      "Produce Listed Successfully",
-      `${createdCrop.name} listed with ₹${createdCrop.farmerPrice}/kg direct farmer rate.`,
+      t('toastListedSuccess'),
+      t('toastListedBody', createdCrop.name, createdCrop.farmerPrice),
       "success"
     );
     try {
@@ -164,8 +227,11 @@ export function AppProvider({ children }) {
   };
 
   const checkoutEscrowOrder = async (orderData) => {
-    // Preferred path: real backend escrow ledger (idempotent, hash-chained).
-    if (backendOnline) {
+    // Server path only when EVERY cart item exists on the backend (crops listed via
+    // API). Locally-added demo crops (CROPS_DATA ids) are unknown server-side and
+    // would 404 — for those, use the local demo escrow directly (no error toast).
+    const allServerSynced = cart.length > 0 && cart.every((item) => item.crop.serverSynced);
+    if (backendOnline && allServerSynced) {
       try {
         const order = await apiCheckout({
           buyerName: orderData?.buyerName || "Smart Consumer",
@@ -189,6 +255,7 @@ export function AppProvider({ children }) {
           })),
           totalAmount: order.total_paise / 100,
           farmerPayout: order.split.farmer_payout_paise / 100,
+          status: "WAITING",
           escrowStatus: "LOCKED_IN_ESCROW",
           logisticsStatus: "SCHEDULED",
           deliveryOtp: null, // OTP lives server-side; delivered via SMS in production
@@ -200,15 +267,14 @@ export function AppProvider({ children }) {
         clearCart();
         setActiveModal(null);
         addNotification(
-          "Order Placed — Server Escrow Verified",
-          `₹${newOrder.totalAmount.toLocaleString('en-IN')} locked in hash-chained escrow ledger.`,
+          t('toastOrderPlaced'),
+          t('toastEscrowLockedBody', newOrder.totalAmount.toLocaleString('en-IN')),
           "success"
         );
         try {
           confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
         } catch { /* ignore */ }
-        return newOrder;
-      } catch (err) {
+        return newOrder;        } catch (err) {
         addNotification(
           "Escrow Sync Failed",
           `${err.message} — completing order in local demo mode.`,
@@ -218,7 +284,7 @@ export function AppProvider({ children }) {
       }
     }
 
-    // Fallback path: local demo escrow (offline / backend down)
+    // Fallback path: local demo escrow (offline / backend down / local crops)
     const newOrder = {
       id: `ORD-2026-${Math.floor(1000 + Math.random() * 9000)}`,
       date: "Just now",
@@ -232,6 +298,7 @@ export function AppProvider({ children }) {
       })),
       totalAmount: cart.reduce((acc, item) => acc + item.crop.krishiSetuPrice * item.quantityKg, 0),
       farmerPayout: cart.reduce((acc, item) => acc + item.crop.farmerPrice * item.quantityKg, 0),
+      status: "WAITING",
       escrowStatus: "LOCKED_IN_ESCROW",
       logisticsStatus: "SCHEDULED",
       deliveryOtp: String(Math.floor(1000 + Math.random() * 9000)),
@@ -243,8 +310,8 @@ export function AppProvider({ children }) {
     clearCart();
     setActiveModal(null);
     addNotification(
-      "Order Placed in Escrow!",
-      `₹${newOrder.totalAmount.toLocaleString('en-IN')} locked safely in Escrow. Farmer will receive payout upon delivery OTP.`,
+      t('toastOrderPlaced'),
+      t('toastEscrowLockedBody', newOrder.totalAmount.toLocaleString('en-IN')),
       "success"
     );
     try {
@@ -253,6 +320,24 @@ export function AppProvider({ children }) {
       // ignore
     }
     return newOrder;
+  };
+
+  const cancelOrder = (orderId) => {
+    const order = orders.find((o) => o.id === orderId);
+    if (!order || order.status === 'CANCELLED' || order.escrowStatus !== 'LOCKED_IN_ESCROW') return;
+
+    setOrders((prev) =>
+      prev.map((o) =>
+        o.id === orderId
+          ? { ...o, status: 'CANCELLED', escrowStatus: 'REFUNDED', logisticsStatus: 'CANCELLED' }
+          : o
+      )
+    );
+    addNotification(
+      t('orderCancelledToast'),
+      t('orderRefundToast', order.totalAmount.toLocaleString('en-IN')),
+      'info'
+    );
   };
 
   const releaseEscrow = async (orderId) => {
@@ -272,6 +357,7 @@ export function AppProvider({ children }) {
       if (o.id === orderId) {
         return {
           ...o,
+          status: 'DELIVERED',
           escrowStatus: "RELEASED_TO_FARMER",
           logisticsStatus: "DELIVERED"
         };
@@ -279,8 +365,8 @@ export function AppProvider({ children }) {
       return o;
     }));
     addNotification(
-      "Escrow Payout Disbursed!",
-      `Funds directly credited to farmer bank account via UPI/NEFT.`,
+      t('toastEscrowReleased'),
+      t('toastEscrowReleasedBody'),
       "success"
     );
     try {
@@ -295,6 +381,9 @@ export function AppProvider({ children }) {
       value={{
         language,
         setLanguage,
+        user,
+        login,
+        logout,
         persona,
         setPersona,
         crops,
@@ -311,6 +400,7 @@ export function AppProvider({ children }) {
         backendOnline,
         placeOrder: checkoutEscrowOrder,
         releaseEscrow,
+        cancelOrder,
         addCropListing,
         notifications,
         addNotification,

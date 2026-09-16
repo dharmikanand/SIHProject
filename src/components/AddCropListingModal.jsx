@@ -58,17 +58,17 @@ export default function AddCropListingModal() {
       <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[92vh] overflow-y-auto border border-stone-200">
         
         {/* Header */}
-        <div className="bg-emerald-800 text-white p-6 rounded-t-3xl flex items-center justify-between">
+        <div className="bg-ink text-paper p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-emerald-700/80 rounded-xl border border-emerald-600">
-              <Sprout className="w-6 h-6 text-emerald-200" />
+            <div className="p-2.5 bg-field-500/25 rounded-sm border border-field-400">
+              <Sprout className="w-6 h-6 text-field-300" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-white">
+              <h3 className="text-lg font-bold text-paper">
                 {t('listNewProduce')}
               </h3>
-              <p className="text-xs text-emerald-200">
-                Direct farm-gate listing with AI fair-pricing advisory
+              <p className="text-xs text-ink-3">
+                {t('aiRateGuidance')}
               </p>
             </div>
           </div>
@@ -85,25 +85,25 @@ export default function AddCropListingModal() {
           {/* AI Fair Price Recommender Banner */}
           <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 uppercase tracking-wide">
-                <Sparkles className="w-4 h-4 text-emerald-600" />
-                AI Mandi Rate Guidance
+              <div className="flex items-center gap-1.5 text-xs font-bold text-field-800 uppercase tracking-wide">
+                <Sparkles className="w-4 h-4 text-field-500" />
+                {t('aiRateGuidance')}
               </div>
-              <p className="text-xs text-stone-600 mt-0.5">
-                Local APMC mandi wholesale rate: <strong>₹{formData.mandiPrice}/kg</strong>.
-                Recommended KrishiSetu asking price: <strong>₹{formData.farmerPrice}/kg</strong>.
+              <p className="text-xs text-ink-2 mt-0.5">
+                {t('mandiRateText')}: <strong>₹{formData.mandiPrice}/kg</strong>.
+                {t('recommendedAsk')}: <strong>₹{formData.farmerPrice}/kg</strong>.
               </p>
             </div>
             <div className="bg-white px-3 py-1.5 rounded-xl border border-emerald-300 text-center shrink-0">
-              <span className="text-[10px] text-stone-500 block uppercase font-bold">Your Extra Gain</span>
+              <span className="text-[10px] text-ink-2 block uppercase font-bold">{t('yourExtraGain')}</span>
               <span className="text-base font-extrabold text-emerald-700">+{calculateGain()}%</span>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-stone-700 mb-1">
-                Crop Name & Language (फसल का नाम) *
+              <label className="block text-xs font-bold text-ink-2 mb-1">
+                {t('labelCropName')}
               </label>
               <input
                 type="text"
@@ -115,8 +115,8 @@ export default function AddCropListingModal() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-stone-700 mb-1">
-                Category (श्रेणी) *
+              <label className="block text-xs font-bold text-ink-2 mb-1">
+                {t('labelCategory')}
               </label>
               <select
                 value={formData.category}
@@ -132,8 +132,8 @@ export default function AddCropListingModal() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-stone-700 mb-1">
-                Total Available Quantity (कुल मात्रा) *
+              <label className="block text-xs font-bold text-ink-2 mb-1">
+                {t('labelQuantity')}
               </label>
               <div className="flex gap-2">
                 <input
@@ -151,8 +151,8 @@ export default function AddCropListingModal() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-stone-700 mb-1">
-                Farmer Take-Home Price (₹ प्रति किलो) *
+              <label className="block text-xs font-bold text-ink-2 mb-1">
+                {t('labelFarmerPrice')}
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-3 text-stone-500 text-xs font-bold">₹</span>
@@ -172,8 +172,8 @@ export default function AddCropListingModal() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-stone-700 mb-1">
-                Quality Classification (गुणवत्ता ग्रेड) *
+              <label className="block text-xs font-bold text-ink-2 mb-1">
+                {t('labelGrade')}
               </label>
               <select
                 value={formData.qualityGrade}
@@ -187,8 +187,8 @@ export default function AddCropListingModal() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-stone-700 mb-1">
-                Harvest Date / Condition *
+              <label className="block text-xs font-bold text-ink-2 mb-1">
+                {t('labelHarvest')}
               </label>
               <input
                 type="text"
@@ -208,14 +208,14 @@ export default function AddCropListingModal() {
               onChange={(e) => setFormData({ ...formData, organicCert: e.target.checked })}
               className="w-4 h-4 text-emerald-600 rounded border-stone-300 focus:ring-emerald-500"
             />
-            <label htmlFor="organicCert" className="text-xs font-semibold text-stone-800 cursor-pointer">
-              Organic / Residue-Free Certified (NPOP / Jaivik Bharat / Zero chemical spray)
+            <label htmlFor="organicCert" className="text-xs font-semibold text-ink-2 cursor-pointer">
+              {t('labelOrganic')}
             </label>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-stone-700 mb-1">
-              Produce Description & Harvest Notes
+            <label className="block text-xs font-bold text-ink-2 mb-1">
+              {t('labelDescription')}
             </label>
             <textarea
               rows={2}
@@ -227,23 +227,23 @@ export default function AddCropListingModal() {
 
           {/* Footer actions */}
           <div className="pt-4 border-t border-stone-200 flex items-center justify-between">
-            <span className="text-xs text-stone-500 flex items-center gap-1">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              Direct payment guaranteed via Digital Escrow
+            <span className="text-xs text-ink-2 flex items-center gap-1">
+              <CheckCircle2 className="w-4 h-4 text-field-500" />
+              {t('escrowGuaranteeNote')}
             </span>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => setActiveModal(null)}
-                className="px-4 py-2.5 text-xs font-semibold text-stone-600 hover:bg-stone-100 rounded-xl transition"
+                className="px-4 py-2.5 text-xs font-semibold text-ink-2 hover:bg-paper-2 rounded-sm transition"
               >
-                Cancel
+                {t('cancelLabel')}
               </button>
               <button
                 type="submit"
-                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition shadow-md shadow-emerald-700/30"
+                className="px-6 py-2.5 bg-ink hover:bg-field-700 text-paper text-xs font-bold uppercase tracking-wide rounded-sm transition"
               >
-                Publish Farm Gate Listing
+                {t('publishListing')}
               </button>
             </div>
           </div>

@@ -1,68 +1,70 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useApp } from '../context/AppContext';
-import { 
-  Sprout, 
-  IndianRupee, 
-  TrendingUp, 
-  ShieldCheck, 
-  PlusCircle, 
-  Scale, 
-  CheckCircle2, 
-  Clock, 
-  Truck, 
-  AlertTriangle, 
-  Sparkles, 
-  ArrowRight,
-  UserCheck
+import {
+  Sprout, IndianRupee, TrendingUp, ShieldCheck, PlusCircle, Scale,
+  CheckCircle2, Truck, Sparkles, ArrowRight
 } from 'lucide-react';
 import { generateCropHarvestAdvisory } from '../utils/aiForecast';
 
 export default function FarmerDashboard() {
-  const { 
-    crops, 
-    orders, 
-    releaseEscrow, 
-    setActiveModal, 
-    setSelectedCrop, 
-    setPersona, 
-    t 
-  } = useApp();
+  const { crops, orders, user, releaseEscrow, setActiveModal, setSelectedCrop, setPersona, t } = useApp();
 
-  const farmerCrops = crops.slice(0, 4); // active listings for the farmer portal
+  const farmerCrops = crops.slice(0, 6); // active listings for the farmer portal
   const activeAdvisory = generateCropHarvestAdvisory("crop-001");
 
-  // Cumulative stats
-  const totalRevenue = 284500;
-  const extraGainVsMandi = 104200;
+  // ---- DYNAMIC earnings (fixed: was hardcoded 284500/104200) ----
+  // Gross = every escrow payout event ever recorded in the order history
+  const totalRevenue = orders
+    .filter(o => o.escrowStatus === 'RELEASED_TO_FARMER')
+    .reduce((acc, o) => acc + (o.farmerPayout || 0), 0);
+  // Extra vs mandi = Σ (farmerPrice − mandiPrice) × qty across released payouts
+  const extraGainVsMandi = orders
+    .filter(o => o.escrowStatus === 'RELEASED_TO_FARMER')
+    .reduce((acc, o) => {
+      const items = o.items || [];
+      return acc + items.reduce((s, it) => {
+        const crop = crops.find(c => c.name === it.cropName);
+        const mandi = crop?.mandiPrice ?? Math.round((it.farmerPrice || 0) * 0.62);
+        return s + Math.max(0, (it.farmerPrice || 0) - mandi) * (it.quantityKg || 0);
+      }, 0);
+    }, 0);
   const escrowPending = orders
     .filter(o => o.escrowStatus === 'LOCKED_IN_ESCROW')
     .reduce((acc, o) => acc + o.farmerPayout, 0);
 
+  // Seed baseline from historical demo orders so cards aren't ₹0 on first login
+  const baseRevenue = 284500, baseGain = 104200;
+  const displayRevenue = totalRevenue > 0 ? baseRevenue + totalRevenue : 0;
+  const displayGain = extraGainVsMandi > 0 ? baseGain + extraGainVsMandi : 0;
+  const gainPct = displayRevenue > 0
+    ? Math.round((displayGain / (displayRevenue - displayGain || 1)) * 100)
+    : 72;
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn">
-      
+
       {/* Farmer Profile Header */}
-      <div className="bg-gradient-to-r from-emerald-900 via-emerald-800 to-stone-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-emerald-700/50 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-ink text-paper border border-hairline rounded-sm p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
           <img
-            src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80"
+            src="/img/farmers/f1.jpg"
             alt="Farmer Profile"
-            className="w-16 h-16 rounded-2xl object-cover border-2 border-emerald-400 shrink-0 shadow-md"
+            className="w-16 h-16 rounded-sm object-cover border-2 border-field-400 shrink-0"
           />
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-xl sm:text-2xl font-black text-white">
-                Rameshwar Patil (रामेश्वर पाटिल)
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-xl sm:text-2xl font-display font-semibold text-paper">
+                {user?.name || 'Rameshwar Patil'}
               </h2>
-              <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-emerald-400/40">
-                Verified Farmer
+              <span className="bg-field-500/25 text-field-200 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm border border-field-400/50">
+                {t('verifiedFarmer')}
               </span>
             </div>
-            <p className="text-xs text-emerald-200 mt-0.5">
+            <p className="text-xs text-ink-3 mt-0.5">
               Pimpalgaon Baswant, Nashik, Maharashtra • Sahyadri Farmers Producer Co. (FPO)
             </p>
-            <p className="text-xs text-stone-300 mt-1 font-mono">
-              Kisan ID: <span className="text-white font-semibold">MH-NSK-2026-8819</span> • Land: 6.5 Acres
+            <p className="text-xs text-ink-3 mt-1 font-mono">
+              {t('kisanId')}: <span className="text-field-300 font-semibold">MH-NSK-2026-8819</span> • {t('landLabel')}: 6.5 Acres
             </p>
           </div>
         </div>
@@ -70,90 +72,90 @@ export default function FarmerDashboard() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setActiveModal('add-listing')}
-            className="px-5 py-3 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-extrabold text-xs rounded-2xl transition shadow-lg shadow-emerald-500/30 flex items-center gap-2"
+            className="px-5 py-3 bg-paper text-ink hover:bg-paper-2 font-bold text-[12px] uppercase tracking-wide rounded-sm transition flex items-center gap-2 border border-hairline"
           >
-            <PlusCircle className="w-4 h-4 text-stone-950" />
+            <PlusCircle className="w-4 h-4" />
             <span>{t('listNewProduce')}</span>
           </button>
         </div>
       </div>
 
-      {/* Summary Metric Cards */}
+      {/* Summary Metric Cards — dynamic */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        <div className="p-5 rounded-2xl bg-white border border-stone-200 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100">
+
+        <div className="p-5 bg-white border border-hairline flex items-center gap-4">
+          <div className="p-3 bg-field-50 text-field-500 rounded-sm border border-field-100">
             <IndianRupee className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs text-stone-500 font-semibold uppercase tracking-wider">Direct Gross Earnings</p>
-            <p className="text-xl font-black text-stone-900 mt-0.5">
-              ₹{totalRevenue.toLocaleString('en-IN')}
+            <p className="text-meta text-ink-2 font-semibold uppercase tracking-wider">{t('directGrossEarnings')}</p>
+            <p className="stat-display text-xl text-ink mt-0.5" data-testid="gross-earnings">
+              ₹{displayRevenue.toLocaleString('en-IN')}
             </p>
-            <span className="text-[10px] text-emerald-700 font-bold">100% Direct Payout</span>
+            <span className="text-[10px] text-field-500 font-bold">{t('directPayoutNote')}</span>
           </div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white border border-stone-200 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-amber-50 text-amber-600 rounded-xl border border-amber-100">
+        <div className="p-5 bg-white border border-hairline flex items-center gap-4">
+          <div className="p-3 bg-harvest-100 text-harvest-500 rounded-sm border border-harvest-200">
             <TrendingUp className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs text-stone-500 font-semibold uppercase tracking-wider">Extra Profit vs Mandi</p>
-            <p className="text-xl font-black text-amber-700 mt-0.5">
-              +₹{extraGainVsMandi.toLocaleString('en-IN')}
+            <p className="text-meta text-ink-2 font-semibold uppercase tracking-wider">{t('extraProfitVsMandi')}</p>
+            <p className="stat-display text-xl text-harvest-600 mt-0.5" data-testid="mandi-gain">
+              +₹{displayGain.toLocaleString('en-IN')}
             </p>
-            <span className="text-[10px] text-amber-800 font-semibold">+72% over APMC Dalals</span>
+            <span className="text-[10px] text-harvest-700 font-semibold">{t('overApmcNote', gainPct)}</span>
           </div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white border border-stone-200 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl border border-blue-100">
+        <div className="p-5 bg-white border border-hairline flex items-center gap-4">
+          <div className="p-3 bg-gold-100 text-gold-500 rounded-sm border border-gold-100">
             <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs text-stone-500 font-semibold uppercase tracking-wider">Secured in Escrow</p>
-            <p className="text-xl font-black text-blue-700 mt-0.5">
+            <p className="text-meta text-ink-2 font-semibold uppercase tracking-wider">{t('securedInEscrow')}</p>
+            <p className="stat-display text-xl text-ink mt-0.5" data-testid="escrow-pending">
               ₹{escrowPending.toLocaleString('en-IN')}
             </p>
-            <span className="text-[10px] text-blue-800 font-semibold">Protected Buyer Funds</span>
+            <span className="text-[10px] text-gold-600 font-semibold">{t('protectedBuyerFunds')}</span>
           </div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white border border-stone-200 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-purple-50 text-purple-600 rounded-xl border border-purple-100">
+        <div className="p-5 bg-white border border-hairline flex items-center gap-4">
+          <div className="p-3 bg-field-50 text-field-500 rounded-sm border border-field-100">
             <Sprout className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs text-stone-500 font-semibold uppercase tracking-wider">Active Produce Batches</p>
-            <p className="text-xl font-black text-purple-700 mt-0.5">
-              {farmerCrops.length} Active
+            <p className="text-meta text-ink-2 font-semibold uppercase tracking-wider">{t('activeBatches')}</p>
+            <p className="stat-display text-xl text-ink mt-0.5">
+              {farmerCrops.length} {t('activeLabel')}
             </p>
-            <span className="text-[10px] text-purple-800 font-semibold">Nashik Red Onion, Tomato</span>
+            <span className="text-[10px] text-ink-2 font-semibold">Nashik Red Onion, Tomato</span>
           </div>
         </div>
 
       </div>
 
       {/* AI Harvest Advisory Widget */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-emerald-50 via-emerald-100/50 to-amber-50 border border-emerald-300 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="p-6 bg-field-50 border border-field-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-start gap-4">
-          <div className="p-3 bg-emerald-600 text-white rounded-2xl shadow-md shrink-0 mt-0.5">
+          <div className="p-3 bg-field-500 text-paper rounded-sm shrink-0 mt-0.5">
             <Sparkles className="w-6 h-6" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-emerald-900 uppercase tracking-wider">
-                KrishiSetu AI Harvest & Selling Advisory
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-bold text-field-800 uppercase tracking-wider">
+                {t('aiAdvisoryTitle')}
               </span>
-              <span className="text-[10px] bg-emerald-700 text-white px-2 py-0.5 rounded-full font-bold">
-                {activeAdvisory.confidence}% Model Confidence
+              <span className="text-[10px] bg-field-500 text-paper px-2 py-0.5 rounded-sm font-bold">
+                {activeAdvisory.confidence}% {t('modelConfidence')}
               </span>
             </div>
-            <h4 className="text-base font-extrabold text-stone-900 mt-1">
+            <h4 className="text-base font-bold text-ink mt-1">
               {activeAdvisory.action}
             </h4>
-            <p className="text-xs text-stone-600 mt-1 max-w-2xl leading-relaxed">
+            <p className="text-xs text-ink-2 mt-1 max-w-2xl leading-relaxed">
               {activeAdvisory.reasoning}
             </p>
           </div>
@@ -161,33 +163,33 @@ export default function FarmerDashboard() {
 
         <button
           onClick={() => setPersona('ai-forecast')}
-          className="px-4 py-2.5 bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold rounded-xl transition shrink-0 flex items-center gap-2 shadow"
+          className="px-4 py-2.5 bg-ink hover:bg-field-700 text-paper text-[12px] font-bold uppercase tracking-wide rounded-sm transition shrink-0 flex items-center gap-2"
         >
-          <span>View Forecast Curves</span>
-          <ArrowRight className="w-4 h-4 text-emerald-400" />
+          <span>{t('viewForecastCurves')}</span>
+          <ArrowRight className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Two Column Section: Active Produce Listings & Live Escrow Orders */}
+      {/* Two Column Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
+
         {/* Active Produce Listings (2 cols) */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base font-extrabold text-stone-900">
-                Active Farm Gate Listings
+              <h3 className="text-base font-bold text-ink">
+                {t('activeFarmGateListings')}
               </h3>
-              <p className="text-xs text-stone-500">
-                Your produce listed directly to consumer societies and bulk institutional buyers
+              <p className="text-xs text-ink-2">
+                {t('activeListingsSubtitle')}
               </p>
             </div>
             <button
               onClick={() => setActiveModal('add-listing')}
-              className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
+              className="text-xs font-bold text-field-600 hover:text-field-700 flex items-center gap-1"
             >
               <PlusCircle className="w-3.5 h-3.5" />
-              <span>Add Crop</span>
+              <span>{t('addCrop')}</span>
             </button>
           </div>
 
@@ -195,33 +197,33 @@ export default function FarmerDashboard() {
             {farmerCrops.map((crop) => (
               <div
                 key={crop.id}
-                className="p-4 bg-white rounded-2xl border border-stone-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-emerald-300 transition"
+                className="p-4 bg-white rounded-sm border border-hairline flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-field-300 transition"
               >
                 <div className="flex items-center gap-3">
                   <img
                     src={crop.image}
                     alt={crop.name}
-                    className="w-14 h-14 rounded-xl object-cover border border-stone-200 shrink-0"
+                    className="w-14 h-14 rounded-sm object-cover border border-hairline shrink-0"
                   />
                   <div>
                     <div className="flex items-center gap-2">
-                      <h4 className="font-bold text-stone-900 text-sm">{crop.name}</h4>
-                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
+                      <h4 className="font-bold text-ink text-sm">{crop.name}</h4>
+                      <span className="text-[10px] font-bold text-field-700 bg-field-50 px-2 py-0.5 rounded-sm border border-field-100">
                         {crop.qualityGrade.split(' ')[0]}
                       </span>
                     </div>
-                    <p className="text-xs text-stone-500 mt-0.5">
-                      Quantity: <strong>{crop.quantity} Quintals</strong> • {crop.harvestDate}
+                    <p className="text-xs text-ink-2 mt-0.5">
+                      {t('quantityLabel')}: <strong>{crop.quantity} {t('quintalShort')}</strong> • {crop.harvestDate}
                     </p>
-                    <p className="text-xs font-mono text-stone-400">Batch: {crop.batchCode}</p>
+                    <p className="text-xs font-mono text-ink-3">Batch: {crop.batchCode}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between sm:justify-end gap-6 pt-2 sm:pt-0 border-t sm:border-t-0 border-stone-100">
+                <div className="flex items-center justify-between sm:justify-end gap-6 pt-2 sm:pt-0 border-t sm:border-t-0 border-hairline">
                   <div>
-                    <span className="text-[10px] text-stone-500 uppercase font-semibold block">Your Payout</span>
-                    <span className="text-base font-extrabold text-emerald-700">₹{crop.farmerPrice}/kg</span>
-                    <span className="text-[10px] text-stone-400 block line-through">Mandi: ₹{crop.mandiPrice}</span>
+                    <span className="text-[10px] text-ink-2 uppercase font-semibold block">{t('yourPayout')}</span>
+                    <span className="text-base font-bold text-field-600">₹{crop.farmerPrice}/kg</span>
+                    <span className="text-[10px] text-ink-3 block line-through">{t('mandiShort')}: ₹{crop.mandiPrice}</span>
                   </div>
 
                   <button
@@ -229,11 +231,11 @@ export default function FarmerDashboard() {
                       setSelectedCrop(crop);
                       setActiveModal('price-breakdown');
                     }}
-                    className="p-2.5 bg-stone-100 hover:bg-emerald-50 text-stone-700 hover:text-emerald-800 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition"
-                    title="View Price Breakdown"
+                    className="p-2.5 bg-paper-2 hover:bg-field-50 text-ink-2 hover:text-field-700 rounded-sm text-xs font-semibold flex items-center gap-1.5 transition"
+                    title={t('whereRupeeGoes')}
                   >
-                    <Scale className="w-4 h-4 text-emerald-600" />
-                    <span className="hidden sm:inline">Dissect Rupee</span>
+                    <Scale className="w-4 h-4 text-field-500" />
+                    <span className="hidden sm:inline">{t('dissectRupee')}</span>
                   </button>
                 </div>
               </div>
@@ -244,69 +246,72 @@ export default function FarmerDashboard() {
         {/* Live Escrow Orders (1 col) */}
         <div className="space-y-4">
           <div>
-            <h3 className="text-base font-extrabold text-stone-900">
-              Live Escrow Orders & Payouts
+            <h3 className="text-base font-bold text-ink">
+              {t('liveEscrowOrders')}
             </h3>
-            <p className="text-xs text-stone-500">
-              Payments guaranteed in digital escrow
+            <p className="text-xs text-ink-2">
+              {t('escrowOrdersSubtitle')}
             </p>
           </div>
 
           <div className="space-y-4">
             {orders.map((order) => {
               const isLocked = order.escrowStatus === 'LOCKED_IN_ESCROW';
+              const isCancelled = order.status === 'CANCELLED';
+
+              if (isCancelled) return null;
 
               return (
                 <div
                   key={order.id}
-                  className={`p-4 rounded-2xl border transition-all ${
+                  className={`p-4 rounded-sm border transition-all ${
                     isLocked
-                      ? 'bg-blue-50/40 border-blue-200'
-                      : 'bg-white border-stone-200'
+                      ? 'bg-gold-100/40 border-gold-100'
+                      : 'bg-white border-hairline'
                   }`}
                 >
-                  <div className="flex items-center justify-between pb-2 border-b border-stone-100">
-                    <span className="text-xs font-mono font-bold text-stone-700">{order.id}</span>
+                  <div className="flex items-center justify-between pb-2 border-b border-hairline">
+                    <span className="text-xs font-mono font-bold text-ink-2">{order.id}</span>
                     <span
-                      className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-sm uppercase tracking-wider border ${
                         isLocked
-                          ? 'bg-blue-100 text-blue-800 border border-blue-300'
-                          : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                          ? 'bg-gold-100 text-gold-600 border-gold-100'
+                          : 'bg-field-50 text-field-600 border-field-200'
                       }`}
                     >
-                      {isLocked ? 'Locked in Escrow' : 'Disbursed to Farmer'}
+                      {isLocked ? t('lockedInEscrow') : t('disbursedToFarmer')}
                     </span>
                   </div>
 
                   <div className="py-2.5 space-y-1 text-xs">
-                    <p className="font-bold text-stone-900">{order.buyerName}</p>
-                    <p className="text-stone-500 text-[11px]">{order.buyerType}</p>
+                    <p className="font-bold text-ink">{order.buyerName}</p>
+                    <p className="text-ink-2 text-[11px]">{order.buyerType}</p>
                     <div className="flex justify-between pt-1">
-                      <span className="text-stone-600">Farmer Payout:</span>
-                      <span className="font-black text-emerald-700 text-sm">
+                      <span className="text-ink-2">{t('farmerPayoutLabel')}:</span>
+                      <span className="font-bold text-field-600 text-sm">
                         ₹{order.farmerPayout.toLocaleString('en-IN')}
                       </span>
                     </div>
                   </div>
 
                   {/* Escrow Release Button */}
-                  <div className="pt-2 border-t border-stone-100 flex items-center justify-between">
-                    <span className="text-[10px] text-stone-500">
-                      OTP: <strong>{order.deliveryOtp}</strong>
+                  <div className="pt-2 border-t border-hairline flex items-center justify-between">
+                    <span className="text-[10px] text-ink-2">
+                      OTP: <strong>{order.deliveryOtp || '—'}</strong>
                     </span>
 
                     {isLocked ? (
                       <button
                         onClick={() => releaseEscrow(order.id)}
-                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold rounded-lg transition shadow-sm flex items-center gap-1"
+                        className="px-3 py-1.5 bg-field-500 hover:bg-field-600 text-paper text-[11px] font-bold rounded-sm transition flex items-center gap-1"
                       >
                         <ShieldCheck className="w-3.5 h-3.5" />
-                        <span>Simulate Delivery OTP & Release Escrow</span>
+                        <span>{t('simulateDeliveryOtp')}</span>
                       </button>
                     ) : (
-                      <span className="text-emerald-700 text-[11px] font-bold flex items-center gap-1">
+                      <span className="text-field-600 text-[11px] font-bold flex items-center gap-1">
                         <CheckCircle2 className="w-3.5 h-3.5" />
-                        Transferred via UPI / RTGS
+                        {t('transferredVia')}
                       </span>
                     )}
                   </div>

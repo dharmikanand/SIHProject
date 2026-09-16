@@ -32,6 +32,8 @@ import {
 } from 'recharts';
 
 export default function AIForecastPage() {
+  const { user, t } = useApp();
+  const isFarmer = user?.role === 'farmer';
   const [selectedCropId, setSelectedCropId] = useState('onion');
   const [viewMode, setViewMode] = useState('combined'); // 'combined', 'prophet_components'
   const [holdDaysSlider, setHoldDaysSlider] = useState(5);
@@ -51,6 +53,9 @@ export default function AIForecastPage() {
 
   const simulatedRevenueGain100Qtl = Math.round(simulatedPriceGainPerKg * 10000);
 
+  // Buyer-facing outlook: derived from the same forecast signal the farmer gets
+  const priceTrendUp = simulatedPriceGainPerKg > 0;
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn">
       
@@ -59,13 +64,13 @@ export default function AIForecastPage() {
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold mb-3">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Meta Prophet Additive Decomposition: y(t) = Trend + Seasonality + Festivals</span>
+            <span>{t('prophetBadge')}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
-            Agmarknet Price & Demand Forecaster
+          <h1 className="text-2xl sm:text-3xl font-display font-semibold tracking-tight">
+            {t('forecastHeadline')}
           </h1>
-          <p className="mt-1 text-xs sm:text-sm text-stone-300 max-w-2xl leading-relaxed">
-            Grounded in official Ministry of Agriculture (Agmarknet) mandi arrivals. Prophet mathematical additive model isolates macro trends, weekly grocery cycles, and festival demand shocks (Navratri, Diwali, Eid).
+          <p className="mt-1 text-xs sm:text-sm text-ink-3 max-w-2xl leading-relaxed">
+            {t('forecastBody')}
           </p>
         </div>
 
@@ -94,12 +99,12 @@ export default function AIForecastPage() {
             <Database className="w-4 h-4" />
           </div>
           <div>
-            <span className="font-extrabold text-stone-900 block">
-              Official Agmarknet Feed Ingested (data.gov.in API v2.1)
-            </span>
-            <span className="text-stone-500 text-[11px]">
-              Daily Modal Wholesale Benchmark: <strong>₹{selectedCrop.currentMandiAvg}/kg</strong> • Minimum Support Price (MSP) Floor Verified
-            </span>
+          <span className="font-bold text-ink block">
+            {t('agmarknetFeed')}
+          </span>
+          <span className="text-ink-2 text-[11px]">
+            {t('dailyBenchmark')}: <strong>₹{selectedCrop.currentMandiAvg}/kg</strong> • {t('mspVerified')}
+          </span>
           </div>
         </div>
 
@@ -110,7 +115,7 @@ export default function AIForecastPage() {
               viewMode === 'combined' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500'
             }`}
           >
-            Price vs Mandi Arrival
+            {t('viewPriceArrival')}
           </button>
           <button
             onClick={() => setViewMode('prophet_components')}
@@ -118,9 +123,35 @@ export default function AIForecastPage() {
               viewMode === 'prophet_components' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500'
             }`}
           >
-            Prophet Components (Trend/Season)
+            {t('viewComponents')}
           </button>
         </div>
+      </div>
+
+      {/* Role-aware advisory: farmer = sell timing, buyer = procurement timing.
+          Same Prophet signal, opposite action — answers "why does a buyer need a forecast?" */}
+      <div className={`p-5 border ${priceTrendUp ? 'bg-harvest-50 border-harvest-200' : 'bg-field-50 border-field-200'} flex flex-col sm:flex-row items-start sm:items-center gap-4`}>
+        <div className={`p-3 rounded-sm shrink-0 ${priceTrendUp ? 'bg-harvest-500 text-paper' : 'bg-field-500 text-paper'}`}>
+          <Sparkles className="w-5 h-5" />
+        </div>
+        <div className="flex-1">
+          <p className="text-meta font-bold uppercase tracking-wider text-ink-3 mb-0.5">
+            {isFarmer ? t('forFarmers') : t('forBuyers')}
+          </p>
+          <p className="text-base font-bold text-ink">
+            {isFarmer
+              ? selectedCrop.advisory
+              : (priceTrendUp ? t('buyerBuyNow') : t('buyerWait'))}
+          </p>
+          {!isFarmer && (
+            <p className="text-xs text-ink-2 mt-1">
+              {t('buyerOutlook')}: {selectedCrop.projectedDemandStatus} · {selectedCrop.advisory}
+            </p>
+          )}
+        </div>
+        <span className={`text-[11px] font-bold px-3 py-1.5 rounded-sm shrink-0 ${priceTrendUp ? 'bg-harvest-100 text-harvest-700' : 'bg-field-100 text-field-700'}`}>
+          {simulatedPriceGainPerKg >= 0 ? `+₹${simulatedPriceGainPerKg}` : `-₹${Math.abs(simulatedPriceGainPerKg)}`}/kg · {t('holdDaysLabel', holdDaysSlider)}
+        </span>
       </div>
 
       {/* Main Chart */}
@@ -128,19 +159,19 @@ export default function AIForecastPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-stone-100">
           <div>
             <h3 className="text-base font-extrabold text-stone-900">
-              {viewMode === 'combined'
-                ? "30-Day Forward Forecast: Modal Price vs. Mandi Arrival Volume"
-                : "Meta Prophet Additive Component Decomposition: g(t) + s(t) + h(t)"}
+            {viewMode === 'combined'
+              ? t('chartCombinedTitle')
+              : t('chartComponentsTitle')}
             </h3>
-            <p className="text-xs text-stone-500">
+            <p className="text-xs text-ink-2">
               {viewMode === 'combined'
-                ? "Demonstrates inverse price-supply elasticity: arrival glut drops price, festival surge increases demand"
-                : "Mathematical isolation of baseline trend growth, 7-day grocery cycle, and festival shocks"}
+                ? t('chartCombinedSub')
+                : t('chartComponentsSub')}
             </p>
           </div>
 
-          <span className="text-[10px] font-mono text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-lg font-bold">
-            R² Fit Score: 0.94
+          <span className="text-[10px] font-mono text-field-800 bg-field-50 px-2.5 py-1 rounded-sm font-bold border border-field-100">
+            {t('r2Fit')}: 0.94
           </span>
         </div>
 
@@ -190,8 +221,8 @@ export default function AIForecastPage() {
         </div>
 
         <div className="flex flex-wrap items-center justify-between text-[11px] text-stone-500 pt-2 border-t border-stone-100">
-          <span>• Model trained on Agmarknet 3-year historical arrival logs & IMD rainfall anomalies.</span>
-          <span className="text-emerald-700 font-semibold">Active Festival Shock: Navratri + Diwali Influx Factor</span>
+          <span>{t('modelNote')}</span>
+          <span className="text-field-600 font-semibold">{t('festivalActive')}</span>
         </div>
       </div>
 
@@ -200,9 +231,9 @@ export default function AIForecastPage() {
         
         {/* Driving Factors */}
         <div className="bg-white p-6 rounded-3xl border border-stone-200 shadow-sm space-y-4">
-          <h4 className="text-sm font-extrabold text-stone-900 uppercase tracking-wider flex items-center gap-2">
-            <Scale className="w-4 h-4 text-emerald-600" />
-            Prophet Exogenous Factor Decomposition
+          <h4 className="text-sm font-bold text-ink uppercase tracking-wider flex items-center gap-2">
+            <Scale className="w-4 h-4 text-field-500" />
+            {t('exogenousFactors')}
           </h4>
 
           <div className="space-y-3">
@@ -227,17 +258,17 @@ export default function AIForecastPage() {
         {/* What-If Holding Simulator */}
         <div className="bg-white p-6 rounded-3xl border border-stone-200 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="text-sm font-extrabold text-stone-900 uppercase tracking-wider flex items-center gap-2">
+            <h4 className="text-sm font-bold text-ink uppercase tracking-wider flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-harvest-600" />
-              Dynamic "What-If" Storage Holding Simulator
+              {t('whatIfTitle')}
             </h4>
-            <span className="text-xs font-mono font-bold text-stone-700 bg-stone-100 px-2.5 py-1 rounded-lg">
-              Hold {holdDaysSlider} Days
+            <span className="text-xs font-mono font-bold text-ink-2 bg-paper-2 px-2.5 py-1 rounded-sm">
+              {t('holdDaysLabel', holdDaysSlider)}
             </span>
           </div>
 
-          <p className="text-xs text-stone-500">
-            Simulate farmer net revenue if produce is stored in KrishiSetu aerated/cold facilities vs sold immediately at local APMC distress rate:
+          <p className="text-xs text-ink-2">
+            {t('whatIfBody')}
           </p>
 
           <input
@@ -251,30 +282,30 @@ export default function AIForecastPage() {
 
           <div className="grid grid-cols-2 gap-3 pt-2">
             <div className="p-3 bg-stone-50 rounded-2xl border border-stone-200 text-center">
-              <span className="text-[10px] text-stone-500 uppercase font-semibold block">Expected Price Shift</span>
+              <span className="text-[10px] text-ink-2 uppercase font-semibold block">{t('expectedShift')}</span>
               <span className={`text-lg font-black mt-0.5 block ${
                 simulatedPriceGainPerKg >= 0 ? 'text-emerald-700' : 'text-red-600'
               }`}>
                 {simulatedPriceGainPerKg >= 0 ? `+₹${simulatedPriceGainPerKg}` : `-₹${Math.abs(simulatedPriceGainPerKg)}`} /kg
               </span>
-              <span className="text-[10px] text-stone-400">After {holdDaysSlider} days</span>
+              <span className="text-[10px] text-ink-3">{t('afterDays', holdDaysSlider)}</span>
             </div>
 
             <div className="p-3 bg-stone-50 rounded-2xl border border-stone-200 text-center">
-              <span className="text-[10px] text-stone-500 uppercase font-semibold block">Net Batch Gain (100 Qtl)</span>
+              <span className="text-[10px] text-ink-2 uppercase font-semibold block">{t('netBatchGain')}</span>
               <span className={`text-lg font-black mt-0.5 block ${
                 simulatedRevenueGain100Qtl >= 0 ? 'text-emerald-700' : 'text-red-600'
               }`}>
                 {simulatedRevenueGain100Qtl >= 0 ? `+₹${simulatedRevenueGain100Qtl.toLocaleString('en-IN')}` : `-₹${Math.abs(simulatedRevenueGain100Qtl).toLocaleString('en-IN')}`}
               </span>
-              <span className="text-[10px] text-stone-400">Extra Farmer Income</span>
+              <span className="text-[10px] text-ink-3">{t('extraFarmerIncome')}</span>
             </div>
           </div>
 
           <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-900 flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
             <span>
-              KrishiSetu provides pre-booked cold warehouse space at ₹0.80/crate-day to enable profitable holding windows.
+              {t('coldStorageNote')}
             </span>
           </div>
         </div>

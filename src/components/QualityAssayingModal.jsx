@@ -16,7 +16,7 @@ import {
 import confetti from 'canvas-confetti';
 
 export default function QualityAssayingModal() {
-  const { activeModal, setActiveModal, selectedCrop, addNotification } = useApp();
+  const { activeModal, setActiveModal, selectedCrop, addNotification, t } = useApp();
   const [isScanning, setIsScanning] = useState(false);
   const [assayResult, setAssayResult] = useState(null);
 
@@ -41,8 +41,8 @@ export default function QualityAssayingModal() {
         qrSignature: "SHA256:8f92a1c098e77b4"
       });
       addNotification(
-        "Digital Assaying Certificate Issued",
-        "Grade A verified by Computer Vision. Escrow dispute protection locked.",
+        t('certificateIssued'),
+        t('certificateBody'),
         "success"
       );
       try {
@@ -64,12 +64,12 @@ export default function QualityAssayingModal() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded-full border border-emerald-800">
-                  Anti-Dispute Shield
+                  {t('antiDisputeShield')}
                 </span>
                 <span className="text-xs font-mono text-stone-400">DoCA Trust Protocol</span>
               </div>
-              <h3 className="text-lg font-bold text-white mt-1">
-                AI Smartphone Quality Assaying (गुणवत्ता ग्रेडिंग)
+              <h3 className="text-lg font-bold text-paper mt-1">
+                {t('qaModalTitle')}
               </h3>
             </div>
           </div>
@@ -87,11 +87,11 @@ export default function QualityAssayingModal() {
           <div className="p-4 bg-amber-50/80 border border-amber-300 rounded-2xl flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
             <div>
-              <h4 className="text-xs font-bold text-amber-950 uppercase tracking-wide">
-                Solving the #1 Failure Point: Destination Grading Disputes
+              <h4 className="text-xs font-bold text-harvest-900 uppercase tracking-wide">
+                {t('disputeTitle')}
               </h4>
-              <p className="text-xs text-amber-900 mt-0.5 leading-relaxed">
-                In traditional mandis, buyers arbitrarily downgrade farmer produce from Grade A to Grade C at the destination gate to force price cuts. KrishiSetu scans and seals the produce grade with computer vision <strong>before farmgate dispatch</strong>, locking it into the digital Escrow contract.
+              <p className="text-xs text-harvest-800 mt-0.5 leading-relaxed">
+                {t('disputeBody')}
               </p>
             </div>
           </div>
@@ -112,7 +112,7 @@ export default function QualityAssayingModal() {
                 <div className="w-full h-1 bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_15px_#22c55e] animate-bounce" />
                 <div className="absolute inset-0 border-2 border-emerald-500/40 grid grid-cols-3 grid-rows-3" />
                 <div className="absolute bottom-4 left-4 right-4 bg-stone-950/80 text-emerald-400 text-xs font-mono p-2 rounded-xl text-center backdrop-blur">
-                  Analyzing surface pixels: Sizing mm, Lycopene RGB, Blemish ratio...
+                  {t('scanAnalyzing')}
                 </div>
               </div>
             )}
@@ -124,7 +124,7 @@ export default function QualityAssayingModal() {
                   className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black rounded-2xl transition shadow-xl flex items-center gap-2"
                 >
                   <Camera className="w-4 h-4" />
-                  <span>Scan Produce with Smartphone AI Camera</span>
+                  <span>{t('startAiScan')}</span>
                 </button>
                 <span className="text-[11px] text-stone-300">
                   Target produce: <strong>{selectedCrop.name}</strong>
@@ -199,7 +199,7 @@ export default function QualityAssayingModal() {
             onClick={() => setActiveModal(null)}
             className="px-5 py-2.5 bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold rounded-xl transition"
           >
-            Close Assaying View
+            {t('closeLabel')}
           </button>
         </div>
 
